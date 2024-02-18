@@ -11,3 +11,8 @@ npm i -g winglang
 ```sh
 wing run main.w
 ```
+
+
+## Preview Environment
+
+This project is connected to wing.cloud, See https://wing.cloud/ekeren/opmed-backend.
