@@ -144,12 +144,6 @@ class RestaurantApi {
     this.restaurantsStore = restaurantsStore;
     this.api = new cloud.Api(cors: true);
 
-    this.api.get("/listBookmarks", inflight(req)=> {
-      return {
-        body: Json.stringify({bookmark: restaurantArrayToJson(restaurantsStore.listBookmarks())}),
-        status: 200
-      };
-    });
     this.api.get("/listRestaurants/:keyword", inflight(req) => {
       let keyword = req.vars.get("keyword");
       let restaurants = restaurantsStore.listRestaurantsFromGoogle(Criteria {keyword: keyword});
@@ -157,16 +151,6 @@ class RestaurantApi {
         body: Json.stringify({restaurants: restaurantArrayToJson(restaurants)}),
         status: 200
       }; 
-    });
-    this.api.post("/addRestaurant", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
-      if let requestBody = req.body {
-        let restaurant = Restaurant.parseJson(requestBody);
-        restaurantsStore.bookmarkRestaurant(restaurant);
-        return {
-          body: Json.stringify({ restaurant: restaurant }),
-          status: 200
-        };
-      } 
     });
   }
 }
