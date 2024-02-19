@@ -152,6 +152,22 @@ class RestaurantApi {
         status: 200
       }; 
     });
+    this.api.post("/addRestaurant", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
+      if let requestBody = req.body {
+        let restaurant = Restaurant.parseJson(requestBody);
+        restaurantsStore.bookmarkRestaurant(restaurant);
+        return {
+          body: Json.stringify({ restaurant: restaurant }),
+          status: 200
+        };
+      } 
+    });
+    this.api.get("/listBookmarks", inflight(req) => {
+      return {
+        body: Json.stringify({bookmark: restaurantArrayToJson(restaurantsStore.listBookmarks())}),
+        status: 200
+      };
+    });
   }
 }
 
