@@ -48,11 +48,7 @@ let getDistanceFromLatLonInKm = inflight (lat1: num, lon1: num, lat2: num, lon2:
  * Convert an array of restaurants to a JSON array
  */
 let restaurantToJson = inflight (restaurant: Restaurant): Json => {
-  let j = MutJson {};
-  j.set("name", restaurant.name);
-  j.set("rating", restaurant.rating);
-  j.set("type", restaurant.type);
-  return Json.deepCopy(j);
+  return restaurant;
 };
 
 /*
@@ -121,16 +117,9 @@ class RestaurantsStore impl IRestaurantsStore {
   }
 
   pub inflight bookmarkRestaurant(restaurant: Restaurant): str {
-    let id = this.counter.inc();
-    let idStr = "${id}";
-    log("new restaurant id: ${idStr}");
-    let j = Json { 
-        name: restaurant.name, 
-        type: restaurant.type,
-        rating: restaurant.rating
-    };
-    log("adding new restaurant ${idStr} with data: ${j}");
-    return this._add(idStr, j);
+    let id = this.counter.inc();    
+    log("adding new restaurant {id} with data: {restaurant}");
+    return this._add("{id}", restaurant);
   }
 
   pub inflight listBookmarks(): Array<Restaurant> {
@@ -138,13 +127,10 @@ class RestaurantsStore impl IRestaurantsStore {
     let result = MutArray<Restaurant>[]; 
     let ids = this.db.smembers("restaurants");
     for id in ids {
-      let j = Json.parse(this.db.get(id) ?? "");
-      let r = Restaurant {
-        name: str.fromJson(j.get("name")),
-        type: str.fromJson(j.get("type")),
-        rating: num.fromJson(j.get("rating"))
-      };
-      result.push(r);
+      if let j = Json.tryParse(this.db.get(id)) {
+        let r = Restaurant.fromJson(j);
+        result.push(r);
+      }
     }
     return result.copy();
   }
@@ -158,34 +144,26 @@ class RestaurantApi {
     this.restaurantsStore = restaurantsStore;
     this.api = new cloud.Api(cors: true);
 
-   
-  
-    this.api.get("/listBookmarks", inflight(req: cloud.ApiRequest): cloud.ApiResponse => {
+    this.api.get("/listBookmarks", inflight(req)=> {
       return {
-        body: Json.stringify({bookmarks: restaurantArrayToJson(restaurantsStore.listBookmarks())}),
+        body: Json.stringify({bookmark: restaurantArrayToJson(restaurantsStore.listBookmarks())}),
         status: 200
       };
     });
-    this.api.get("/listRestaurants/:keyword", inflight(req: cloud.ApiRequest): cloud.ApiResponse => {
+    this.api.get("/listRestaurants/:keyword", inflight(req) => {
       let keyword = req.vars.get("keyword");
       let restaurants = restaurantsStore.listRestaurantsFromGoogle(Criteria {keyword: keyword});
-      return cloud.ApiResponse {
+      return {
         body: Json.stringify({restaurants: restaurantArrayToJson(restaurants)}),
         status: 200
       }; 
     });
     this.api.post("/addRestaurant", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
       if let requestBody = req.body {
-        let body = Json.parse(requestBody);
-        let restaurant = Restaurant {
-          name: str.fromJson(body.get("name")),
-          type: str.fromJson(body.get("type")),
-          rating: num.fromJson(body.get("rating"))
-        };
+        let restaurant = Restaurant.parseJson(requestBody);
         restaurantsStore.bookmarkRestaurant(restaurant);
-        return cloud.ApiResponse {
-        
-          body: Json.stringify({restaurant: restaurantToJson(restaurant)}),
+        return {
+          body: Json.stringify({ restaurant: restaurant }),
           status: 200
         };
       } 
