@@ -140,7 +140,6 @@ class RestaurantsStore impl IRestaurantsStore {
     for id in ids {
       let j = Json.parse(this.db.get(id) ?? "");
       let r = Restaurant {
-        name: str.fromJson(j.get("name")),
         type: str.fromJson(j.get("type")),
         rating: num.fromJson(j.get("rating"))
       };
@@ -178,6 +177,7 @@ class RestaurantApi {
       if let requestBody = req.body {
         let body = Json.parse(requestBody);
         let restaurant = Restaurant {
+          name: str.fromJson(body.get("name")),
           type: str.fromJson(body.get("type")),
           rating: num.fromJson(body.get("rating"))
         };
