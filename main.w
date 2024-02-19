@@ -12,7 +12,7 @@ struct Criteria {
 }
 
 struct Restaurant {
-    name: str;
+    name: str?;
     rating: num;
     type: str;
 }
@@ -160,7 +160,12 @@ class RestaurantApi {
 
    
   
-  
+    this.api.get("/listBookmarks", inflight(req: cloud.ApiRequest): cloud.ApiResponse => {
+      return {
+        body: Json.stringify({bookmarks: restaurantArrayToJson(restaurantsStore.listBookmarks())}),
+        status: 200
+      };
+    });
     this.api.get("/listRestaurants/:keyword", inflight(req: cloud.ApiRequest): cloud.ApiResponse => {
       let keyword = req.vars.get("keyword");
       let restaurants = restaurantsStore.listRestaurantsFromGoogle(Criteria {keyword: keyword});
@@ -168,6 +173,21 @@ class RestaurantApi {
         body: Json.stringify({restaurants: restaurantArrayToJson(restaurants)}),
         status: 200
       }; 
+    });
+    this.api.post("/addRestaurant", inflight (req: cloud.ApiRequest): cloud.ApiResponse => {
+      if let requestBody = req.body {
+        let body = Json.parse(requestBody);
+        let restaurant = Restaurant {
+          type: str.fromJson(body.get("type")),
+          rating: num.fromJson(body.get("rating"))
+        };
+        restaurantsStore.bookmarkRestaurant(restaurant);
+        return cloud.ApiResponse {
+        
+          body: Json.stringify({restaurant: restaurantToJson(restaurant)}),
+          status: 200
+        };
+      } 
     });
   }
 }
