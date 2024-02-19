@@ -12,7 +12,7 @@ struct Criteria {
 }
 
 struct Restaurant {
-    name: str;
+    name: str?;
     rating: num;
     type: str;
 }
@@ -178,7 +178,6 @@ class RestaurantApi {
       if let requestBody = req.body {
         let body = Json.parse(requestBody);
         let restaurant = Restaurant {
-          name: str.fromJson(body.get("name")),
           type: str.fromJson(body.get("type")),
           rating: num.fromJson(body.get("rating"))
         };
